@@ -1,94 +1,97 @@
 // Dependencies
 // =============================================================
-var express = require("express");
-var path = require("path");
+const express = require("express");
+const path = require("path");
 
 // Sets up the Express App
 // =============================================================
-var app = express();
-var PORT = 3000;
+const app = express();
+const PORT = 3000;
 
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Star Wars Characters (DATA)
+// Hot Restaurant Table (DATA)
 // =============================================================
-var characters = [
-  {
-    routeName: "yoda",
-    name: "Yoda",
-    role: "Jedi Master",
-    age: 900,
-    forcePoints: 2000
-  },
-  {
-    routeName: "darthmaul",
-    name: "Darth Maul",
-    role: "Sith Lord",
-    age: 200,
-    forcePoints: 1200
-  },
-  {
-    routeName: "obiwankenobi",
-    name: "Obi Wan Kenobi",
-    role: "Jedi Master",
-    age: 55,
-    forcePoints: 1350
-  }
-];
+const tables = [];
+const waitlist = [];
 
 // Routes
 // =============================================================
 
 // Basic route that sends the user first to the AJAX Page
-app.get("/", function(req, res) {
-  res.sendFile(path.join(__dirname, "view.html"));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.get("/add", function(req, res) {
-  res.sendFile(path.join(__dirname, "add.html"));
+app.get("/tables", (req, res) => {
+  res.sendFile(path.join(__dirname, "tables.html"));
 });
 
-// Displays all characters
-app.get("/api/characters", function(req, res) {
-  return res.json(characters);
+app.get("/reserve", (req, res) => {
+  res.sendFile(path.join(__dirname, "reserve.html"));
 });
 
-// Displays a single character, or returns false
-app.get("/api/characters/:character", function(req, res) {
-  var chosen = req.params.character;
+// Creating the json api
+app.get("/api/tables", (req, res) => {
+  return res.json(tables);
+});
+
+app.get("/api/waitlist", (req, res) => {
+  return res.json(waitlist);
+});
+
+// Displays the tables reserved
+app.post("/api/tables/", (req, res) => {
+  console.log(req.body)
+
+  if (tables.length < 5) {
+    tables.push(req.body);
+    console.log(tables)
+    return res.json(false);
+  } else {
+    waitlist.push(req.body);
+    console.log(waitlist)
+    return res.json(true);
+  }
+});
+
+//Displays the waitlisted tables
+app.get("/api/waitlist/:waitlisted", (req, res) => {
+  const chosen = req.params.waitlisted;
 
   console.log(chosen);
-
-  for (var i = 0; i < characters.length; i++) {
-    if (chosen === characters[i].routeName) {
-      return res.json(characters[i]);
+  if (tables.length >= 5) {
+    for (let i = 4; i < waitlist.length; i++) {
+      if (chosen === waitlist[i].routeName) {
+        return res.json(waitlist[i]);
+      }
     }
+    return res.json(false);
   }
-
-  return res.json(false);
 });
 
 // Create New Characters - takes in JSON input
-app.post("/api/characters", function(req, res) {
+app.post("/api/tables", (req, res) => {
   // req.body hosts is equal to the JSON post sent from the user
   // This works because of our body parsing middleware
-  var newCharacter = req.body;
+  const newTable = req.body;
 
-  // Using a RegEx Pattern to remove spaces from newCharacter
+  // Using a RegEx Pattern to remove spaces from newTable
   // You can read more about RegEx Patterns later https://www.regexbuddy.com/regex.html
-  newCharacter.routeName = newCharacter.name.replace(/\s+/g, "").toLowerCase();
+  newTable.routeName = newTable.name.replace(/\s+/g, "").toLowerCase();
 
-  console.log(newCharacter);
+  console.log(newTable);
 
-  characters.push(newCharacter);
+  tables.push(newTable);
 
-  res.json(newCharacter);
+  res.json(newTable);
 });
+
 
 // Starts the server to begin listening
 // =============================================================
-app.listen(PORT, function() {
+app.listen(PORT, () => {
   console.log("App listening on PORT " + PORT);
 });
